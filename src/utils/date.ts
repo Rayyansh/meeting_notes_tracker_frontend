@@ -18,3 +18,10 @@ export function addDaysISO(iso: string, days: number): string {
   const [y, m, d] = iso.split('-').map(Number) as [number, number, number]
   return todayISO(new Date(y, m - 1, d + days))
 }
+
+/** `2026-07-28` -> `28 Jul 2026` (parsed as a local date, so no timezone shift). */
+export function formatDate(iso: string): string {
+  if (!isValidISODate(iso)) return 'Not specified'
+  const [y, m, d] = iso.split('-').map(Number) as [number, number, number]
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(y, m - 1, d))
+}

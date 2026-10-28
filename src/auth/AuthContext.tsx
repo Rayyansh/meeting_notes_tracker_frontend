@@ -1,14 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { authService } from '@/api/services'
 import type { LoginInput, RegisterInput, User } from '@/types'
 import { onSessionExpired } from './sessionEvents'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
+/** Why the last session ended; lets the route guard decide what to tell the login page. */
+type EndReason = 'logout' | 'expired' | null
 
 interface AuthContextValue {
   user: User | null
   status: AuthStatus
+  endReason: EndReason
   login: (input: LoginInput) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
   logout: () => Promise<void>
@@ -23,26 +25,25 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<AuthStatus>('loading')
-  const navigate = useNavigate()
+  const [endReason, setEndReason] = useState<EndReason>(null)
   const statusRef = useRef(status)
   useEffect(() => {
     statusRef.current = status
   }, [status])
 
-  // A service reported an expired session: drop local auth and go to login,
-  // remembering where the user was so login can bring them back.
+  // A service reported an expired session: drop local auth. The route guard
+  // then redirects to /login (remembering the page and showing the notice).
   useEffect(
     () =>
       onSessionExpired(() => {
         if (statusRef.current !== 'authenticated') return
-        const from = window.location.pathname + window.location.search
         statusRef.current = 'unauthenticated'
+        setEndReason('expired')
         setUser(null)
         setStatus('unauthenticated')
         authService.logout().catch(() => undefined) // best-effort server/session cleanup
-        navigate('/login', { replace: true, state: { expired: true, from } })
       }),
-    [navigate],
+    [],
   )
 
   useEffect(() => {
@@ -66,12 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (input: LoginInput) => {
     const u = await authService.login(input)
+    setEndReason(null)
     setUser(u)
     setStatus('authenticated')
   }, [])
 
   const register = useCallback(async (input: RegisterInput) => {
     const u = await authService.register(input)
+    setEndReason(null)
     setUser(u)
     setStatus('authenticated')
   }, [])
@@ -81,12 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authService.logout()
     } finally {
       // Always clear local state, even if the server call failed.
+      setEndReason('logout')
       setUser(null)
       setStatus('unauthenticated')
     }
   }, [])
 
-  const value = useMemo(() => ({ user, status, login, register, logout }), [user, status, login, register, logout])
+  const value = useMemo(
+    () => ({ user, status, endReason, login, register, logout }),
+    [user, status, endReason, login, register, logout],
+  )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

@@ -1,8 +1,22 @@
 import type { Meeting } from '@/types'
 import type { MeetingsService } from '../services/meetings'
+import { MEETING_TYPES } from '@/types'
+import { isValidISODate } from '@/utils/date'
 import { AppError } from '../errors'
 import { db } from './db'
 import { delay, failIf, newId } from './storage'
+
+/** Mimics server-side validation so the UI's field-error mapping is exercised. */
+function validate(input: Partial<Pick<Meeting, 'title' | 'date' | 'type' | 'transcript'>>, requireAll: boolean): void {
+  const errors: Record<string, string> = {}
+  if ((requireAll || input.title !== undefined) && !input.title?.trim()) errors.title = 'Title is required.'
+  if ((requireAll || input.date !== undefined) && !(input.date && isValidISODate(input.date))) errors.date = 'Enter a valid date.'
+  if ((requireAll || input.type !== undefined) && !(MEETING_TYPES as readonly string[]).includes(input.type ?? '')) errors.type = 'Select a valid meeting type.'
+  if ((requireAll || input.transcript !== undefined) && !input.transcript?.trim()) errors.transcript = 'Transcript cannot be empty.'
+  if (Object.keys(errors).length > 0) {
+    throw new AppError('VALIDATION', 'Some of the details are not valid. Please check the form and try again.', { fieldErrors: errors })
+  }
+}
 
 function find(id: string): Meeting {
   const meeting = db.meetings().find((m) => m.id === id)
@@ -35,6 +49,7 @@ export const meetingsMock: MeetingsService = {
   async create(input) {
     await delay()
     failIf('save')
+    validate(input, true)
     const now = new Date().toISOString()
     const meeting: Meeting = {
       ...input,
@@ -54,6 +69,7 @@ export const meetingsMock: MeetingsService = {
   async update(id, input) {
     await delay()
     failIf('save')
+    validate(input, false)
     const current = find(id)
     const transcriptChanged = input.transcript !== undefined && input.transcript !== current.transcript
     const notesChanged = input.notes !== undefined && input.notes !== current.notes
