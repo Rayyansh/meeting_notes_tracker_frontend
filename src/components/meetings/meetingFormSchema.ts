@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { MEETING_TYPES, type MeetingInput, type MeetingType } from '@/types'
+import { MEETING_TYPES, type Meeting, type MeetingInput, type MeetingType } from '@/types'
 import { env } from '@/config/env'
 import { isValidISODate } from '@/utils/date'
 import { MAX_PARTICIPANT_LENGTH, MAX_PARTICIPANTS, parseParticipants } from '@/utils/participants'
@@ -49,5 +49,16 @@ export function toMeetingInput(values: MeetingFormValues): MeetingInput {
     type: values.type as MeetingType,
     participants: parseParticipants(values.participants),
     transcript: values.transcript,
+  }
+}
+
+/** Prefill values for editing. Participants are joined so they round-trip through `parseParticipants`. */
+export function toMeetingFormValues(meeting: Meeting): MeetingFormValues {
+  return {
+    title: meeting.title,
+    date: meeting.date,
+    type: meeting.type,
+    participants: meeting.participants.join(', '),
+    transcript: meeting.transcript,
   }
 }

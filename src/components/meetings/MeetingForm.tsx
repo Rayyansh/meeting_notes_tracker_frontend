@@ -28,11 +28,20 @@ interface MeetingFormProps {
   /** Should throw on failure; the form shows the friendly message / field errors. */
   onSubmit: (input: MeetingInput) => Promise<void>
   onCancel: () => void
+  /** Edit mode: shown while the transcript differs from `originalTranscript` (e.g. AI results will go stale). */
+  transcriptWarning?: { originalTranscript: string; message: string }
 }
 
 const FIELDS = ['title', 'date', 'type', 'participants', 'transcript'] as const
 
-export function MeetingForm({ initialValues = EMPTY_MEETING_FORM, submitLabel, submittingLabel, onSubmit, onCancel }: MeetingFormProps) {
+export function MeetingForm({
+  initialValues = EMPTY_MEETING_FORM,
+  submitLabel,
+  submittingLabel,
+  onSubmit,
+  onCancel,
+  transcriptWarning,
+}: MeetingFormProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadNote, setUploadNote] = useState<string | null>(null)
@@ -160,6 +169,14 @@ export function MeetingForm({ initialValues = EMPTY_MEETING_FORM, submitLabel, s
               </p>
             )}
             {uploadNote && !uploadError && <p role="status">{uploadNote}</p>}
+            {transcriptWarning && transcript !== transcriptWarning.originalTranscript && (
+              <p
+                role="status"
+                className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+              >
+                {transcriptWarning.message}
+              </p>
+            )}
             <p>
               {transcript.length.toLocaleString()} / {TRANSCRIPT_MAX_CHARS.toLocaleString()} characters. Plain .txt files up to {env.maxUploadKb} KB.
             </p>
