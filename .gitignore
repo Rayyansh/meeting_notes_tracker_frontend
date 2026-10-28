@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.local
+*.local
+.DS_Store
+Task1-Project Discovery Meeting Transcript (1).pdf
+Task1-Zignuts AI-Native Campus Hiring Challenge (1).pdf
+CLAUDE.md
