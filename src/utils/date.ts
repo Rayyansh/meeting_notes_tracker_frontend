@@ -25,3 +25,10 @@ export function formatDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number) as [number, number, number]
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(y, m - 1, d))
 }
+
+/** ISO timestamp -> `28 Jul 2026, 16:00` in the user's locale/timezone. */
+export function formatDateTime(isoTimestamp: string): string {
+  const d = new Date(isoTimestamp)
+  if (Number.isNaN(d.getTime())) return 'Not specified'
+  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(d)
+}

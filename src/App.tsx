@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { RequireAuth } from '@/components/layout/RequireAuth'
 import ComingSoonPage from '@/pages/ComingSoonPage'
 import EditMeetingPage from '@/pages/EditMeetingPage'
+import MeetingDetailPage from '@/pages/MeetingDetailPage'
 import NewMeetingPage from '@/pages/NewMeetingPage'
 import MeetingsPage from '@/pages/MeetingsPage'
 import LoginPage from '@/pages/LoginPage'
@@ -26,7 +27,7 @@ export default function App() {
                 <Route path="/dashboard" element={<ComingSoonPage title="Dashboard" />} />
                 <Route path="/meetings" element={<MeetingsPage />} />
                 <Route path="/meetings/new" element={<NewMeetingPage />} />
-                <Route path="/meetings/:id" element={<ComingSoonPage title="Meeting detail" />} />
+                <Route path="/meetings/:id" element={<MeetingDetailPage />} />
                 <Route path="/meetings/:id/edit" element={<EditMeetingPage />} />
                 <Route path="/tracker" element={<ComingSoonPage title="Action Tracker" />} />
               </Route>
